@@ -20,6 +20,6 @@ A read-only check on the ThinkBook 14 G7 ARP read CPU temperature and the reques
 
 Keyboard traversal at 200% application text size was checked, including focus scrolling to the curve editor controls. Accessible roles and Qt announcement events are covered at source and widget-test level. Orca is unavailable in the environment, so end-to-end AT-SPI behavior remains unverified. Platform high contrast and formal contrast ratios were not checked.
 
-A 10-second offscreen demo idle sample used 49,388 KiB RSS at both sample points; CPU rounded to 0.0% of one logical core at the available clock resolution. This fixture result has no comparable baseline and excludes live telemetry and compositor costs. It does not demonstrate a performance gain.
+A 10-second offscreen UI fixture sample used 49,388 KiB RSS at both sample points; CPU rounded to 0.0% of one logical core at the available clock resolution. This fixture result has no comparable baseline and excludes live telemetry and compositor costs. It does not demonstrate a performance gain.
 
 No thermal benchmark was run, and the project does not claim WCAG conformance.

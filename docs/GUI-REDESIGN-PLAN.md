@@ -12,7 +12,7 @@ Profiles can be created, duplicated, renamed, deleted, imported, and exported. C
 
 ## Engineering constraints
 
-The implementation uses native Qt widgets and painting. Telemetry and privileged operations are asynchronous. Configuration writes are validated and recoverable. Session history has a bounded in-memory sample count. Demo mode remains explicit and does not perform hardware operations.
+The implementation uses native Qt widgets and painting. Telemetry and privileged operations are asynchronous. Configuration writes are validated and recoverable. Session history has a bounded in-memory sample count. Hardware operation depends on the installed `lenovo-fanboost` daemon and driver.
 
 ## Review
 

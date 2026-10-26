@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lenovo Fan Boost GUI is a native Linux desktop interface for the `lenovo-fanboost` service. It provides fan profile selection, curve editing, live readings, diagnostics, and service controls.
+Lenovo Fan Boost GUI is a native Linux desktop client for `lenovo-fanboost`. Fan control comes from the backend daemon and kernel driver; the GUI does not implement hardware control itself. It provides fan profile selection, curve editing, live readings, diagnostics, and service controls.
 
 ## Platform and operation
 
