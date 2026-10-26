@@ -61,6 +61,14 @@ install(FILES resources/lenovo-fanboost-gui.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
 )
 
-install(FILES resources/icons/lenovo-fanboost-gui.svg
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+foreach(SIZE 16 24 32 48 64 128 256)
+    install(FILES resources/icons/lenovo-fanboost-gui-${SIZE}.png
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${SIZE}x${SIZE}/apps
+        RENAME lenovo-fanboost-gui.png
+    )
+endforeach()
+
+install(FILES resources/icons/lenovo-fanboost-gui.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps
+    RENAME lenovo-fanboost-gui.png
 )

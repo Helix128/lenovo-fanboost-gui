@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setWindowTitle(tr("Lenovo Fan Boost"));
-    setWindowIcon(QIcon(":/icons/lenovo-fanboost-gui-128.png"));
+    setWindowIcon(qApp->windowIcon());
     resize(740, 560);
     setMinimumSize(640, 480);
 

@@ -1,53 +1,51 @@
 # lenovo-fanboost-gui
 
-Qt6 companion interface and tray monitor for [lenovo-fanboost](https://github.com/Helix128/lenovo-fanboost).
+A lightweight Qt6 interface for [lenovo-fanboost](https://github.com/Helix128/lenovo-fanboost), making it easier to control and monitor fan behavior on supported Lenovo ThinkBook, Yoga, and IdeaPad laptops.
 
-Provides a continuous fan curve editor, live telemetry readouts, and profile switching for supported Lenovo laptops (ThinkBook, Yoga, and IdeaPad).
+It lets you customize fan curves, manage profiles, and monitor temperatures without having to manually edit configuration files.
 
 ## Features
 
-- **Curve Editor**: Graphically edit temperature vs fan percentage points (`[temp_celsius, percent]`). Points are draggable and constrained to monotonic fan speeds.
-- **Stock and Custom Profiles**: Ships with three default presets (`Quiet`, `Balanced`, `Aggressive`) kept as read-only templates. Custom profiles can be created, renamed, or removed.
-- **System Tray Monitor**: Background tray icon with real-time temperature badge, quick profile switcher, and an immediate toggle between `Active` and `Inactive (EC Mode)`.
-- **Live Telemetry**: Real-time display of CPU temperature (`Tctl` from `k10temp`), target RPM, percentage, and EC fan register readback.
-- **Desktop Privilege Escalation**: Uses `pkexec` when saving changes to `/etc/lenovo-fanboost.toml` or restarting the daemon.
-- **Native Implementation**: Written in C++20 and Qt6 Widgets.
+- **Fan Curve Editor**: Create and adjust fan curves by dragging points on a graph.
+- **Profile Management**: Create, edit, and switch between fan curve profiles.
+- **System Tray**: Monitor temperatures, switch profiles, and toggle fan control from the tray.
+- **Live Monitoring**: View CPU temperature, fan speed, and EC readings in real time.
 
 ## Requirements
 
-- `lenovo-fanboost` (kernel driver and daemon)
+- [lenovo-fanboost](https://github.com/Helix128/lenovo-fanboost) (kernel driver and daemon)
 - `qt6-base`
-- `cmake` (>= 3.20)
-- C++20 compiler (`clang` or `gcc`)
+- `cmake` (3.20+)
+- C++20 compiler (GCC or Clang)
 
 ## Building
 
-```sh
+```bash
 cmake -B build -S .
 cmake --build build
 ```
 
 To install:
 
-```sh
+```bash
 sudo cmake --install build
 ```
 
 ## Usage
 
-Launch the main window:
+Launch the application:
 
-```sh
+```bash
 lenovo-fanboost-gui
 ```
 
-Start minimized to the system tray (for desktop autostart):
+Or start minimized to the system tray:
 
-```sh
+```bash
 lenovo-fanboost-gui --tray
 ```
 
-Only one instance can run at a time; launching a second instance brings the existing window to the front and exits.
+Only one instance can run at a time. Launching it again will bring the existing window to the front.
 
 ## License
 

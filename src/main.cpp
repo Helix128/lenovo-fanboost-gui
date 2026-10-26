@@ -15,7 +15,17 @@ int main(int argc, char *argv[])
     app.setOrganizationName("Helix128");
     app.setApplicationVersion("0.1.0");
     app.setDesktopFileName("lenovo-fanboost-gui");
-    app.setWindowIcon(QIcon(":/icons/lenovo-fanboost-gui-128.png"));
+
+    QIcon appIcon;
+    appIcon.addFile(":/icons/lenovo-fanboost-gui-16.png", QSize(16, 16));
+    appIcon.addFile(":/icons/lenovo-fanboost-gui-24.png", QSize(24, 24));
+    appIcon.addFile(":/icons/lenovo-fanboost-gui-32.png", QSize(32, 32));
+    appIcon.addFile(":/icons/lenovo-fanboost-gui-48.png", QSize(48, 48));
+    appIcon.addFile(":/icons/lenovo-fanboost-gui-64.png", QSize(64, 64));
+    appIcon.addFile(":/icons/lenovo-fanboost-gui-128.png", QSize(128, 128));
+    appIcon.addFile(":/icons/lenovo-fanboost-gui-256.png", QSize(256, 256));
+    appIcon.addFile(":/icons/lenovo-fanboost-gui.png", QSize(512, 512));
+    app.setWindowIcon(appIcon);
 
     const QString socketName = QString("lenovo-fanboost-gui-single-%1").arg(getuid());
 
