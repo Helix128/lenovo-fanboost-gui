@@ -1,134 +1,225 @@
 #include "telemetry_monitor.h"
 
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
-#include <QProcess>
 #include <QTextStream>
 
-TelemetryMonitor::TelemetryMonitor(QObject *parent)
-    : QObject(parent)
+namespace
+{
+constexpr auto serviceName = "lenovo-fanboost.service";
+constexpr int servicePollIntervalMs = 3000;
+} // namespace
+
+TelemetryMonitor::TelemetryMonitor(QObject *parent) : QObject(parent)
 {
     connect(&m_timer, &QTimer::timeout, this, &TelemetryMonitor::poll);
+    m_serviceTimer.setInterval(servicePollIntervalMs);
+    m_serviceTimeout.setSingleShot(true);
+    m_operationTimeout.setSingleShot(true);
+    connect(&m_serviceTimeout, &QTimer::timeout, &m_serviceProcess, &QProcess::kill);
+    connect(&m_operationTimeout, &QTimer::timeout, this, [this] {
+        m_operationTimedOut = true;
+        m_operationProcess.kill();
+    });
+    connect(&m_serviceTimer, &QTimer::timeout, this, &TelemetryMonitor::queryService);
+    connect(&m_serviceProcess, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this,
+            &TelemetryMonitor::handleServiceQueryFinished);
+    connect(&m_operationProcess, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this,
+            [this](int code, QProcess::ExitStatus status) {
+                m_operationTimeout.stop();
+                handleOperationFinished(code, status);
+            });
+    connect(&m_operationProcess, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart && m_operationBusy) {
+            m_operationTimeout.stop();
+            setOperationBusy(false);
+            emit operationFinished(false,
+                                   "The service operation was denied, cancelled, or could not be started.");
+        }
+    });
 }
 
 void TelemetryMonitor::start(int intervalMs)
 {
     refreshNow();
-    m_timer.start(intervalMs);
+    m_timer.start(qMax(intervalMs, 250));
+    m_serviceTimer.start();
+    queryService();
 }
 
 void TelemetryMonitor::stop()
 {
     m_timer.stop();
+    m_serviceTimer.stop();
 }
 
 void TelemetryMonitor::refreshNow()
 {
     poll();
+    queryService();
 }
 
 QString TelemetryMonitor::findHwmon(const QString &driverName) const
 {
     QDir hwmonDir("/sys/class/hwmon");
-    const QStringList entries = hwmonDir.entryList(QStringList() << "hwmon*", QDir::Dirs | QDir::NoDotAndDotDot);
+    const QStringList entries = hwmonDir.entryList({"hwmon*"}, QDir::Dirs | QDir::NoDotAndDotDot);
     for (const QString &entry : entries) {
-        QString namePath = hwmonDir.filePath(entry) + "/name";
-        QFile file(namePath);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QString content = QTextStream(&file).readLine().trimmed();
-            if (content == driverName) {
-                return hwmonDir.filePath(entry);
-            }
-        }
+        QFile file(hwmonDir.filePath(entry) + "/name");
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text) &&
+            QTextStream(&file).readLine().trimmed() == driverName)
+            return hwmonDir.filePath(entry);
     }
-    return QString();
+    return {};
 }
 
-int TelemetryMonitor::readIntFromFile(const QString &path, int fallback) const
+bool TelemetryMonitor::tryReadIntFromFile(const QString &path, int *value) const
 {
     QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return fallback;
-    }
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
     bool ok = false;
-    int val = QTextStream(&file).readLine().trimmed().toInt(&ok);
-    return ok ? val : fallback;
+    const int parsed = QTextStream(&file).readLine().trimmed().toInt(&ok);
+    if (ok)
+        *value = parsed;
+    return ok;
 }
 
 void TelemetryMonitor::poll()
 {
-    if (m_fanHwmonPath.isEmpty() || !QFile::exists(m_fanHwmonPath)) {
+    if (m_fanHwmonPath.isEmpty() || !QFile::exists(m_fanHwmonPath))
         m_fanHwmonPath = findHwmon("lenovo_fanboost");
-    }
-    if (m_tempHwmonPath.isEmpty() || !QFile::exists(m_tempHwmonPath)) {
+    if (m_tempHwmonPath.isEmpty() || !QFile::exists(m_tempHwmonPath))
         m_tempHwmonPath = findHwmon("k10temp");
-    }
 
-    TelemetryData data;
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    TelemetryData data = m_lastData;
     data.driverLoaded = !m_fanHwmonPath.isEmpty();
 
-    if (!m_tempHwmonPath.isEmpty()) {
-        int rawTemp = readIntFromFile(m_tempHwmonPath + "/temp1_input", 0);
-        data.tempCelsius = rawTemp / 1000.0;
+    int raw = 0;
+    if (!m_tempHwmonPath.isEmpty() && tryReadIntFromFile(m_tempHwmonPath + "/temp1_input", &raw)) {
+        data.tempCelsius = raw / 1000.0;
+        data.tempValid = true;
+        m_tempReadAt = now;
+    } else {
+        data.tempValid = false;
     }
 
-    if (data.driverLoaded) {
-        data.targetRpm = readIntFromFile(m_fanHwmonPath + "/fan1_target", 0);
-        data.maxRpm = readIntFromFile(m_fanHwmonPath + "/fan1_max", 4000);
-        data.ecRaw = readIntFromFile(m_fanHwmonPath + "/fan1_raw", 0);
+    if (data.driverLoaded && tryReadIntFromFile(m_fanHwmonPath + "/fan1_target", &raw)) {
+        data.targetRpm = raw;
+        data.targetValid = raw >= 0;
+        if (data.targetValid)
+            m_targetReadAt = now;
+    } else {
+        data.targetValid = false;
     }
-
-    // Check systemd service status
-    QProcess proc;
-    proc.start("systemctl", QStringList() << "is-active" << "lenovo-fanboost.service");
-    proc.waitForFinished(500);
-    QString status = proc.readAllStandardOutput().trimmed();
-    data.serviceActive = (status == "active");
-
-    QProcess failProc;
-    failProc.start("systemctl", QStringList() << "is-failed" << "lenovo-fanboost.service");
-    failProc.waitForFinished(500);
-    data.serviceFailed = (failProc.readAllStandardOutput().trimmed() == "failed");
-
+    if (data.driverLoaded && tryReadIntFromFile(m_fanHwmonPath + "/fan1_max", &raw)) {
+        data.maxRpm = raw;
+        data.maxRpmValid = raw > 0;
+    } else {
+        data.maxRpmValid = false;
+    }
+    if (data.driverLoaded && tryReadIntFromFile(m_fanHwmonPath + "/fan1_raw", &raw)) {
+        data.ecRaw = raw;
+        data.ecRawValid = true;
+    } else {
+        data.ecRawValid = false;
+    }
+    data.tempAgeMs = m_tempReadAt ? qMax<qint64>(0, now - m_tempReadAt) : -1;
+    data.targetAgeMs = m_targetReadAt ? qMax<qint64>(0, now - m_targetReadAt) : -1;
+    data.serviceAgeMs = m_serviceReadAt ? qMax<qint64>(0, now - m_serviceReadAt) : -1;
+    m_lastData = data;
     emit telemetryUpdated(data);
 }
 
-bool TelemetryMonitor::setServiceActive(bool active, QString *errorMessage)
+void TelemetryMonitor::queryService()
 {
-    QString verb = active ? "enable" : "disable";
-    QProcess proc;
-    proc.start("pkexec", QStringList() << "systemctl" << verb << "--now" << "lenovo-fanboost.service");
-    proc.waitForFinished(10000);
+    if (m_serviceProcess.state() != QProcess::NotRunning)
+        return;
+    m_serviceProcess.start("systemctl", {"show", "--property=LoadState", "--property=ActiveState",
+                                         "--property=SubState", "--property=UnitFileState", serviceName});
+    m_serviceTimeout.start(1500);
+}
 
-    if (proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0) {
-        if (errorMessage) {
-            *errorMessage = proc.readAllStandardError().trimmed();
-            if (errorMessage->isEmpty()) {
-                *errorMessage = proc.readAllStandardOutput().trimmed();
-            }
-            if (errorMessage->isEmpty()) {
-                *errorMessage = QString("Command 'systemctl %1' failed with code %2").arg(verb).arg(proc.exitCode());
-            }
-        }
-        return false;
+void TelemetryMonitor::handleServiceQueryFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    m_serviceTimeout.stop();
+    if (exitStatus != QProcess::NormalExit || exitCode != 0) {
+        m_lastData.serviceKnown = false;
+        m_lastData.bootEnabledKnown = false;
+        m_lastData.serviceAgeMs =
+            m_serviceReadAt ? qMax<qint64>(0, QDateTime::currentMSecsSinceEpoch() - m_serviceReadAt) : -1;
+        emit telemetryUpdated(m_lastData);
+        return;
     }
-
-    if (active) {
-        // Give daemon 300ms to start and read config
-        QProcess checkProc;
-        checkProc.start("systemctl", QStringList() << "is-active" << "lenovo-fanboost.service");
-        checkProc.waitForFinished(1000);
-        if (checkProc.readAllStandardOutput().trimmed() != "active") {
-            QProcess journalProc;
-            journalProc.start("journalctl", QStringList() << "-u" << "lenovo-fanboost.service" << "-n" << "4" << "--no-pager");
-            journalProc.waitForFinished(1000);
-            if (errorMessage) {
-                *errorMessage = QString("Service failed to start:\n%1")
-                                    .arg(journalProc.readAllStandardOutput().trimmed());
-            }
-            return false;
-        }
+    const QString output = QString::fromLocal8Bit(m_serviceProcess.readAllStandardOutput());
+    QString loadState;
+    QString activeState;
+    QString subState;
+    QString unitFileState;
+    for (const QString &line : output.split('\n')) {
+        if (line.startsWith("LoadState="))
+            loadState = line.mid(10).trimmed();
+        else if (line.startsWith("ActiveState="))
+            activeState = line.mid(12).trimmed();
+        else if (line.startsWith("SubState="))
+            subState = line.mid(9).trimmed();
+        else if (line.startsWith("UnitFileState="))
+            unitFileState = line.mid(14).trimmed();
     }
+    if (activeState.isEmpty() || loadState != "loaded" || unitFileState.isEmpty() || unitFileState == "bad") {
+        m_lastData.serviceKnown = false;
+        m_lastData.bootEnabledKnown = false;
+        m_lastData.serviceAgeMs =
+            m_serviceReadAt ? qMax<qint64>(0, QDateTime::currentMSecsSinceEpoch() - m_serviceReadAt) : -1;
+        emit telemetryUpdated(m_lastData);
+        return;
+    }
+    m_lastData.serviceKnown = true;
+    m_lastData.bootEnabledKnown = true;
+    m_lastData.bootEnabled = unitFileState == "enabled" || unitFileState == "enabled-runtime";
+    m_lastData.serviceActive = activeState == "active";
+    m_lastData.serviceFailed = activeState == "failed" || subState == "failed";
+    m_serviceReadAt = QDateTime::currentMSecsSinceEpoch();
+    m_lastData.serviceAgeMs = 0;
+    emit telemetryUpdated(m_lastData);
+}
 
-    return true;
+void TelemetryMonitor::setOperationBusy(bool busy)
+{
+    if (m_operationBusy == busy)
+        return;
+    m_operationBusy = busy;
+    emit busyChanged(busy);
+}
+
+void TelemetryMonitor::startOperation(const QStringList &arguments)
+{
+    if (m_operationBusy || m_operationProcess.state() != QProcess::NotRunning) {
+        emit operationFinished(false, "A service operation is already in progress.");
+        return;
+    }
+    setOperationBusy(true);
+    m_operationTimedOut = false;
+    m_operationTimeout.start(60000);
+    m_operationProcess.start("pkexec", QStringList{"systemctl"} + arguments + QStringList{serviceName});
+}
+
+void TelemetryMonitor::requestServiceActive(bool active) { startOperation({active ? "start" : "stop"}); }
+
+void TelemetryMonitor::requestStartAtBoot(bool enabled) { startOperation({enabled ? "enable" : "disable"}); }
+
+void TelemetryMonitor::handleOperationFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    if (!m_operationBusy)
+        return;
+    const QString error = QString::fromLocal8Bit(m_operationProcess.readAllStandardError()).trimmed();
+    const QString output = QString::fromLocal8Bit(m_operationProcess.readAllStandardOutput()).trimmed();
+    const bool success = !m_operationTimedOut && exitStatus == QProcess::NormalExit && exitCode == 0;
+    setOperationBusy(false);
+    emit operationFinished(success, m_operationTimedOut ? "Service operation timed out."
+                                    : success           ? "Service operation completed."
+                                                        : (error.isEmpty() ? output : error));
+    if (success)
+        queryService();
 }

@@ -3,6 +3,8 @@
 #include <QIcon>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QMessageBox>
+#include <QSystemTrayIcon>
 #include <unistd.h>
 
 #include "mainwindow.h"
@@ -27,12 +29,28 @@ int main(int argc, char *argv[])
     appIcon.addFile(":/icons/lenovo-fanboost-gui.png", QSize(512, 512));
     app.setWindowIcon(appIcon);
 
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Fan profiles and curve editor for lenovo-fanboost.");
+    parser.addHelpOption();
+    parser.addVersionOption();
+    QCommandLineOption trayOption(QStringList() << "t" << "tray" << "minimized",
+                                  "Start in the system tray, when available.");
+    QCommandLineOption demoOption("demo", "Preview the interface with sample data and no hardware control.");
+    parser.addOption(trayOption);
+    parser.addOption(demoOption);
+    parser.process(app);
+    const bool demo = parser.isSet(demoOption);
+    if (demo) {
+        app.setApplicationName("lenovo-fanboost-gui-preview");
+    }
+
     const QString socketName = QString("lenovo-fanboost-gui-single-%1").arg(getuid());
 
     // 1. Check if an instance is already running
     QLocalSocket socket;
-    socket.connectToServer(socketName);
-    if (socket.waitForConnected(500)) {
+    if (!demo)
+        socket.connectToServer(socketName);
+    if (!demo && socket.waitForConnected(500)) {
         // Signal existing instance to raise its window and exit immediately
         socket.write("ACTIVATE\n");
         socket.waitForBytesWritten(500);
@@ -40,27 +58,22 @@ int main(int argc, char *argv[])
     }
 
     // 2. Start local single-instance listener
-    QLocalServer::removeServer(socketName);
     auto *server = new QLocalServer(&app);
-    server->listen(socketName);
+    server->setSocketOptions(QLocalServer::UserAccessOption);
+    if (!demo) {
+        QLocalServer::removeServer(socketName);
+        if (!server->listen(socketName)) {
+            QMessageBox::critical(nullptr, "Cannot start Lenovo Fan Boost", server->errorString());
+            return 1;
+        }
+    }
 
-    QCommandLineParser parser;
-    parser.setApplicationDescription("Lenovo Fan Boost GUI Companion");
-    parser.addHelpOption();
-    parser.addVersionOption();
-
-    QCommandLineOption trayOption(QStringList() << "t" << "tray" << "minimized",
-                                  "Start minimized to system tray.");
-    parser.addOption(trayOption);
-    parser.process(app);
-
-    MainWindow window;
+    MainWindow window(nullptr, demo);
 
     // Reactivate window if user launches a second instance
     QObject::connect(server, &QLocalServer::newConnection, [&window, server]() {
         QLocalSocket *client = server->nextPendingConnection();
         if (client) {
-            client->waitForReadyRead(500);
             window.showNormal();
             window.activateWindow();
             window.raise();
@@ -69,7 +82,7 @@ int main(int argc, char *argv[])
         }
     });
 
-    if (!parser.isSet(trayOption)) {
+    if (demo || !parser.isSet(trayOption) || !QSystemTrayIcon::isSystemTrayAvailable()) {
         window.show();
     }
 
