@@ -12,13 +12,13 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('475264148978fa4b45e2f0a2c39fe94faba4be64571dfcccd248362e76878308')
 
 build() {
-  cmake -B build -S "$pkgname-$pkgver" \
+  cmake -B "build-$pkgver" -S "$pkgname-$pkgver" \
     -DCMAKE_BUILD_TYPE=None \
     -DBUILD_TESTING=OFF \
     -DCMAKE_INSTALL_PREFIX=/usr
-  cmake --build build
+  cmake --build "build-$pkgver"
 }
 
 package() {
-  DESTDIR="$pkgdir" cmake --install build
+  DESTDIR="$pkgdir" cmake --install "build-$pkgver"
 }
