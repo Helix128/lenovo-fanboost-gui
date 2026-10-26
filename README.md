@@ -18,6 +18,16 @@ sudo cmake --install build
 
 Telemetry comes from hwmon. Values may be unavailable if the driver or sensor does not report them. The fan request is not a measured RPM value.
 
+## Install from AUR
+
+On Arch-based systems, install with an AUR helper:
+
+```sh
+yay -S lenovo-fanboost-gui
+```
+
+This also installs `lenovo-fanboost`, the backend required for hardware control.
+
 ## Run
 
 ```sh
