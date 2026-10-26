@@ -1,6 +1,6 @@
 pkgbase = lenovo-fanboost-gui
 	pkgdesc = Native Qt6 companion GUI for lenovo-fanboost
-	pkgver = 0.1.0
+	pkgver = 0.1.1
 	pkgrel = 1
 	url = https://github.com/Helix128/lenovo-fanboost-gui
 	arch = x86_64
@@ -10,7 +10,7 @@ pkgbase = lenovo-fanboost-gui
 	depends = hicolor-icon-theme
 	depends = polkit
 	depends = lenovo-fanboost
-	source = lenovo-fanboost-gui-0.1.0.tar.gz::https://github.com/Helix128/lenovo-fanboost-gui/archive/refs/tags/v0.1.0.tar.gz
-	sha256sums = 1ebb1a18dff34addb0b1c2fdaff5108b88568c30796c5cd2e0cd7d3a6036f0e0
+	source = lenovo-fanboost-gui-0.1.1.tar.gz::https://github.com/Helix128/lenovo-fanboost-gui/archive/refs/tags/v0.1.1.tar.gz
+	sha256sums = SKIP
 
 pkgname = lenovo-fanboost-gui

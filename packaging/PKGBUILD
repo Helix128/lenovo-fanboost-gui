@@ -1,6 +1,6 @@
 # Maintainer: Diego M. <15237757+Helix128@users.noreply.github.com>
 pkgname=lenovo-fanboost-gui
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Native Qt6 companion GUI for lenovo-fanboost"
 arch=('x86_64')
@@ -9,7 +9,7 @@ license=('GPL-2.0-only')
 depends=('qt6-base' 'hicolor-icon-theme' 'polkit' 'lenovo-fanboost')
 makedepends=('cmake')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('1ebb1a18dff34addb0b1c2fdaff5108b88568c30796c5cd2e0cd7d3a6036f0e0')
+sha256sums=('SKIP')
 
 build() {
   cmake -B build -S "$pkgname-$pkgver" \
