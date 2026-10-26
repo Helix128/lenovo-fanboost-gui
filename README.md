@@ -1,34 +1,14 @@
 # lenovo-fanboost-gui
 
-A native Qt 6 desktop client for the Linux `lenovo-fanboost` service. Use it to select and edit fan profiles, view live readings, and manage the service.
+A native Qt 6 GUI for the Linux `lenovo-fanboost` service. Fan control comes from its daemon and kernel driver; the GUI does not control hardware by itself.
 
-Fan control is provided by the `lenovo-fanboost` daemon and kernel driver. Install the backend before using the GUI to control hardware. The GUI does not control fans on its own.
+Select a profile to preview it, then choose **Save and use** to apply it. Edit curves with the graph or numeric table. Changes to built-in profiles become custom profiles. Firmware automatic and Fan curve switch service modes immediately. Displayed RPM is the requested target; a zero request returns control to firmware.
 
-## Profiles and fan control
+The GUI also includes live temperature readings, profile import and export, session history in Diagnostics, system tray controls, and separate startup settings for the app and service.
 
-The sidebar shows the current fan mode, configured profile, and saved profiles. Selecting a profile previews it. Choose **Save and use** to apply it. Curve edits stay as a draft until saved; editing a built-in profile creates a custom draft. If a draft is open, the app asks whether to save or discard it before switching profiles.
+## Build
 
-**Firmware automatic** and **Fan curve** switch the service mode immediately. This is separate from saving profile edits. The RPM value is a requested target, not a measured fan speed. A zero request returns control to firmware; the fan may continue to run.
-
-## Features
-
-- CPU temperature and fan request appear beside the curve.
-- Edit curves by dragging points or entering values in the numeric table.
-- Create, duplicate, rename, delete, import, and export profiles. Profile files use version 1 JSON.
-- View up to 600 session samples in separate temperature and fan request plots and a timestamped table.
-- Set separate startup options for the app at login and the fan-control service at boot.
-- Select a light or dark appearance, use the system tray, and copy diagnostics.
-
-## Requirements
-
-- Qt 6 Core, Gui, Widgets, and Network development packages
-- CMake 3.20 or newer and a C++20 compiler
-- The installed `lenovo-fanboost` backend, kernel driver, and systemd service (required for hardware telemetry and fan control)
-- A running system Polkit agent for privileged service operations
-
-Telemetry comes from hwmon. A reading is unavailable when the driver or sensor does not provide it.
-
-## Build and install
+Requires Qt 6 Core, Gui, Widgets, and Network, CMake 3.20+, and a C++20 compiler. Install `lenovo-fanboost` and its driver for hardware control. Privileged service actions require a system Polkit agent.
 
 ```sh
 cmake -S . -B build
@@ -36,7 +16,7 @@ cmake --build build
 sudo cmake --install build
 ```
 
-To build without Qt Test targets, add `-DBUILD_TESTING=OFF` to the configure command.
+Telemetry comes from hwmon. Values may be unavailable if the driver or sensor does not report them. The fan request is not a measured RPM value.
 
 ## Run
 
@@ -45,11 +25,11 @@ lenovo-fanboost-gui
 lenovo-fanboost-gui --tray
 ```
 
-Only one regular instance runs per user. Launching the application again raises its existing window.
+Launching it again raises the existing window.
 
 ## Tests
 
-With testing enabled, run Qt tests using the offscreen platform:
+Run the tests with:
 
 ```sh
 QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure
