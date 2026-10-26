@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/lenovo-fanboost-gui.png</file>
+        <file>icons/lenovo-fanboost-gui-128.png</file>
+        <file>icons/lenovo-fanboost-gui-64.png</file>
+        <file>icons/lenovo-fanboost-gui-32.png</file>
+        <file>icons/lenovo-fanboost-gui-16.png</file>
+        <file>icons/lenovo-fanboost-gui.svg</file>
+    </qresource>
+</RCC>

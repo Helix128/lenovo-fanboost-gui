@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3daee9"/>
+      <stop offset="100%" stop-color="#1d6f9a"/>
+    </linearGradient>
+    <linearGradient id="centerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eff0f1"/>
+      <stop offset="100%" stop-color="#bdc3c7"/>
+    </linearGradient>
+    <radialGradient id="ringGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="85%" stop-color="#31363b" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#3daee9" stop-opacity="0.3"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Outer Ring Frame -->
+  <circle cx="64" cy="64" r="58" fill="none" stroke="#3daee9" stroke-width="4" stroke-dasharray="14 6" opacity="0.85"/>
+  <circle cx="64" cy="64" r="50" fill="url(#ringGrad)"/>
+
+  <!-- Fan Blades (4 blades with dynamic aerodynamic curvature) -->
+  <g id="blades">
+    <!-- Blade 1 -->
+    <path d="M 64 64 C 64 45, 80 20, 100 24 C 105 38, 92 56, 64 64 Z" fill="url(#bladeGrad)"/>
+    <!-- Blade 2 -->
+    <path d="M 64 64 C 83 64, 108 80, 104 100 C 90 105, 72 92, 64 64 Z" fill="url(#bladeGrad)"/>
+    <!-- Blade 3 -->
+    <path d="M 64 64 C 64 83, 48 108, 28 104 C 23 90, 36 72, 64 64 Z" fill="url(#bladeGrad)"/>
+    <!-- Blade 4 -->
+    <path d="M 64 64 C 45 64, 20 48, 24 28 C 38 23, 56 36, 64 64 Z" fill="url(#bladeGrad)"/>
+  </g>
+
+  <!-- Center Hub -->
+  <circle cx="64" cy="64" r="18" fill="url(#centerGrad)" stroke="#31363b" stroke-width="3"/>
+  <circle cx="64" cy="64" r="7" fill="#232629"/>
+  <circle cx="64" cy="64" r="3" fill="#3daee9"/>
+</svg>

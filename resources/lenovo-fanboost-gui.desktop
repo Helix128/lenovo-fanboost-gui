@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Lenovo Fan Boost
+Comment=Continuous fan curve control and monitoring for Lenovo laptops
+GenericName=Fan Speed Controller
+Exec=lenovo-fanboost-gui
+Icon=lenovo-fanboost-gui
+Terminal=false
+Type=Application
+Categories=System;Settings;HardwareSettings;
+Keywords=fan;lenovo;cooling;thinkbook;thermal;boost;
+StartupNotify=true
