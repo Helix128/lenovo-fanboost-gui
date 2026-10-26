@@ -1,51 +1,53 @@
 # lenovo-fanboost-gui
 
-Native Qt6 companion GUI and system tray utility for [lenovo-fanboost](https://github.com/Helix128/lenovo-fanboost).
+Qt6 companion interface and tray monitor for [lenovo-fanboost](https://github.com/Helix128/lenovo-fanboost).
 
-Provides a continuous fan curve editor, real-time hardware telemetry, and one-click profile switching for supported Lenovo laptops (ThinkBook, Yoga, and IdeaPad models).
+Provides a continuous fan curve editor, live telemetry readouts, and profile switching for supported Lenovo laptops (ThinkBook, Yoga, and IdeaPad).
 
 ## Features
 
-- **Interactive Fan Curve Editor**: Graphically edit temperature vs fan percentage points (`[temp_celsius, percent]`) with drag-and-drop points, double-click to add, and right-click to delete.
-- **Stock & Custom Profiles**: Ships with three default profiles (`Quiet`, `Balanced`, `Aggressive`) and supports creating, duplicating, and removing custom curves.
-- **System Tray Integration**: Background tray icon displaying real-time CPU temperature badges, quick profile switching, and immediate toggle between `Active` and `Inactive (EC Mode)`.
-- **Live Telemetry**: Real-time tracking of CPU temperature (`Tctl` from `k10temp`), target RPM and percentage, driver state, and raw EC register speed.
-- **Polkit Privilege Escalation**: Clean desktop authentication prompts (`pkexec`) when updating `/etc/lenovo-fanboost.toml` or restarting the daemon.
-- **Zero Electron Bloat**: Built in pure C++20 with Qt6 Widgets for minimal memory footprint and native integration with KDE Plasma and CachyOS/Arch Linux.
+- **Curve Editor**: Graphically edit temperature vs fan percentage points (`[temp_celsius, percent]`). Points are draggable and constrained to monotonic fan speeds.
+- **Stock and Custom Profiles**: Ships with three default presets (`Quiet`, `Balanced`, `Aggressive`) kept as read-only templates. Custom profiles can be created, renamed, or removed.
+- **System Tray Monitor**: Background tray icon with real-time temperature badge, quick profile switcher, and an immediate toggle between `Active` and `Inactive (EC Mode)`.
+- **Live Telemetry**: Real-time display of CPU temperature (`Tctl` from `k10temp`), target RPM, percentage, and EC fan register readback.
+- **Desktop Privilege Escalation**: Uses `pkexec` when saving changes to `/etc/lenovo-fanboost.toml` or restarting the daemon.
+- **Native Implementation**: Written in C++20 and Qt6 Widgets.
 
 ## Requirements
 
-- `lenovo-fanboost` (kernel module and daemon)
+- `lenovo-fanboost` (kernel driver and daemon)
 - `qt6-base`
 - `cmake` (>= 3.20)
-- C++20 compliant compiler (`clang` or `gcc`)
+- C++20 compiler (`clang` or `gcc`)
 
-## Building from source
+## Building
 
 ```sh
 cmake -B build -S .
 cmake --build build
 ```
 
-To install to system directories:
+To install:
 
 ```sh
 sudo cmake --install build
 ```
 
-## Running
+## Usage
 
-Launch the full window:
+Launch the main window:
 
 ```sh
 lenovo-fanboost-gui
 ```
 
-Launch directly minimized to the system tray (ideal for autostart):
+Start minimized to the system tray (for desktop autostart):
 
 ```sh
 lenovo-fanboost-gui --tray
 ```
+
+Only one instance can run at a time; launching a second instance brings the existing window to the front and exits.
 
 ## License
 

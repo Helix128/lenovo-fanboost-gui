@@ -268,9 +268,22 @@ bool ConfigManager::save(const QString &path, QString *errorMessage)
     QString tempPath = tempFile.fileName();
     tempFile.close();
 
-    // Use pkexec cp to copy into /etc/lenovo-fanboost.toml
+    // Execute copy, chmod, and service restart in a single atomic pkexec prompt
+    QProcess activeCheck;
+    activeCheck.start("systemctl", QStringList() << "is-active" << "lenovo-fanboost.service");
+    activeCheck.waitForFinished(500);
+    bool isRunning = (activeCheck.readAllStandardOutput().trimmed() == "active");
+
+    QString script;
+    if (isRunning) {
+        script = QString("cp %1 %2 && chmod 644 %2 && systemctl restart lenovo-fanboost.service")
+                     .arg(tempPath, path);
+    } else {
+        script = QString("cp %1 %2 && chmod 644 %2").arg(tempPath, path);
+    }
+
     QProcess proc;
-    proc.start("pkexec", QStringList() << "cp" << tempPath << path);
+    proc.start("pkexec", QStringList() << "sh" << "-c" << script);
     proc.waitForFinished(10000);
 
     if (proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0) {
@@ -284,21 +297,6 @@ bool ConfigManager::save(const QString &path, QString *errorMessage)
             }
         }
         return false;
-    }
-
-    // Set world-readable permissions (0644)
-    QProcess chmodProc;
-    chmodProc.start("pkexec", QStringList() << "chmod" << "644" << path);
-    chmodProc.waitForFinished(3000);
-
-    // If daemon is active, restart it to reload the new configuration
-    QProcess activeCheck;
-    activeCheck.start("systemctl", QStringList() << "is-active" << "lenovo-fanboost.service");
-    activeCheck.waitForFinished(1000);
-    if (activeCheck.readAllStandardOutput().trimmed() == "active") {
-        QProcess restartProc;
-        restartProc.start("pkexec", QStringList() << "systemctl" << "restart" << "lenovo-fanboost.service");
-        restartProc.waitForFinished(5000);
     }
 
     return true;

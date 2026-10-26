@@ -185,7 +185,7 @@ void MainWindow::setupUi()
     connect(m_discardBtn, &QPushButton::clicked, this, &MainWindow::onDiscardClicked);
     bottomBar->addWidget(m_discardBtn);
 
-    m_saveBtn = new QPushButton(tr("Save & Apply"), this);
+    m_saveBtn = new QPushButton(tr("Save && Apply"), this);
     m_saveBtn->setEnabled(false);
     m_saveBtn->setStyleSheet("QPushButton { font-weight: bold; padding: 6px 16px; }");
     connect(m_saveBtn, &QPushButton::clicked, this, &MainWindow::onSaveClicked);
