@@ -50,3 +50,5 @@ Only one instance can run at a time. Launching it again will bring the existing 
 ## License
 
 GPL-2.0-only. See [LICENSE](LICENSE).
+
+**Disclaimer:** This is an independent, community-developed project and is not affiliated with, endorsed by, or supported by Lenovo. Lenovo® is a trademark of Lenovo.
