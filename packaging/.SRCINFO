@@ -11,6 +11,6 @@ pkgbase = lenovo-fanboost-gui
 	depends = polkit
 	depends = lenovo-fanboost
 	source = lenovo-fanboost-gui-0.1.1.tar.gz::https://github.com/Helix128/lenovo-fanboost-gui/archive/refs/tags/v0.1.1.tar.gz
-	sha256sums = SKIP
+	sha256sums = 475264148978fa4b45e2f0a2c39fe94faba4be64571dfcccd248362e76878308
 
 pkgname = lenovo-fanboost-gui
