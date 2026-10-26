@@ -1,6 +1,10 @@
 build/
 build-*/
 .impeccable/
+packaging/src/
+packaging/pkg/
+packaging/*.pkg.tar.zst
+packaging/lenovo-fanboost-gui-*.tar.gz
 *.o
 *.a
 *.so

@@ -9,7 +9,7 @@ license=('GPL-2.0-only')
 depends=('qt6-base' 'hicolor-icon-theme' 'polkit' 'lenovo-fanboost')
 makedepends=('cmake')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('1ebb1a18dff34addb0b1c2fdaff5108b88568c30796c5cd2e0cd7d3a6036f0e0')
 
 build() {
   cmake -B build -S "$pkgname-$pkgver" \
